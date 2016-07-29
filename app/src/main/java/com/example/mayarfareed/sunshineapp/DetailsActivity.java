@@ -8,17 +8,13 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
 public class DetailsActivity extends AppCompatActivity {
-    private TextView textView;
     private String data;
-
-    private ShareActionProvider mShareActionProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +22,7 @@ public class DetailsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_day_details);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        
+
         //up button
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -43,15 +39,15 @@ public class DetailsActivity extends AppCompatActivity {
         //get data from the last activity
         Intent intent= getIntent();
         data = intent.getStringExtra("data");
-        textView= (TextView) findViewById(R.id.textView);
+        TextView textView = (TextView) findViewById(R.id.textView);
         textView.setText(data);
     }
+
     private Intent shareforecastintent(){
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         shareIntent.setType("Text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, data);
-        Log.d("gogo", "shareforecastintent: "+data);
         return shareIntent;
     }
 
@@ -62,14 +58,10 @@ public class DetailsActivity extends AppCompatActivity {
 
         // Locate MenuItem with ShareActionProvider
         MenuItem item = menu.findItem(R.id.action_share);
-
-
         // Fetch and store ShareActionProvider
-        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
-        Log.d("goo", "shareforecastintent: "+mShareActionProvider+ item.getTitle());
+        ShareActionProvider mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
         if (mShareActionProvider != null) {
             mShareActionProvider.setShareIntent(shareforecastintent());
-            Log.d("goo", "shareforecastintent: "+data);
         }
         return true;
     }
@@ -79,6 +71,7 @@ public class DetailsActivity extends AppCompatActivity {
         if(item.getItemId() == R.id.action_settings){
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

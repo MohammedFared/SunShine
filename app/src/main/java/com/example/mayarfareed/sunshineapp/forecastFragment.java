@@ -23,6 +23,8 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -210,7 +212,7 @@ public class forecastFragment extends Fragment {
         protected void onPostExecute(String[] strings) {
             ArrayAdapter forecastAdapter;
             List<String> weekForecast = new ArrayList<>(Arrays.asList(forecasts));
-            forecastAdapter= new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast,
+            forecastAdapter= new ArrayAdapter<>(getActivity(), R.layout.list_item_forecast,
                     R.id.list_item_forecast_textView, weekForecast);
             listView.setAdapter(forecastAdapter);
 
@@ -225,7 +227,6 @@ public class forecastFragment extends Fragment {
                     startActivity(intent);
                 }
             });
-
             progressbar.setVisibility(View.GONE);
             super.onPostExecute(strings);
         }
@@ -334,7 +335,7 @@ public class forecastFragment extends Fragment {
 
         }
 
-        private String[] forecasts = new String[0];
+        private String[] forecasts = new String[7];
 
 
 
@@ -397,16 +398,18 @@ public class forecastFragment extends Fragment {
                     return null;
                 }
                 forecastJsonStr = buffer.toString();
-                forecasts = getWeatherDataFromJson(forecastJsonStr, 7);
+//                forecasts = getWeatherDataFromJson(forecastJsonStr, 7);
+
+                forecasts = getWeatherDataGson(forecastJsonStr);
+
             } catch (IOException e) {
 
-                Snackbar.make(getView(), "Connect to network", Snackbar.LENGTH_LONG).show();
+                Snackbar.make(getView(), "Connect to a network", Snackbar.LENGTH_LONG).show();
                 Log.e(LOG_TAG, "Error ", e);
+                Log.d(LOG_TAG, "doInBackground: array: "+forecasts);
                 // If the code didn't successfully get the weather data, there's no point in attemping
                 // to parse it.
                 return null;
-            } catch (JSONException e) {
-                e.printStackTrace();
             } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
@@ -421,6 +424,28 @@ public class forecastFragment extends Fragment {
             }
 
             return forecasts;
+        }
+
+        private String[] getWeatherDataGson(String forecastJsonStr) {
+            Gson gson = new Gson();
+            OpenWeatherBean openWeatherBean = gson.fromJson(forecastJsonStr, OpenWeatherBean.class);
+            List<OpenWeatherBean.ListBean> days =
+                    openWeatherBean.getList();
+
+            long dateTime;
+            Time dayTime = new Time();
+            int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
+            // Cheating to convert this to UTC time, which is what we want anyhow
+            int ie=0;
+            for(OpenWeatherBean.ListBean day: days){
+                dateTime = dayTime.setJulianDay(julianStartDay+ie);
+                String dateString = getReadableDateString(dateTime);
+                String highAndLow = formatHighLows(day.getTemp().getMax(), day.getTemp().getMin());
+                forecasts[ie] = dateString + " - " + day.getWeather().get(0).getDescription() + " - " + highAndLow;
+                Log.d(LOG_TAG, "doInBackground: array: max"+ ie +" "+forecasts[ie]);
+                ie++;
+            }
+            return  forecasts;
         }
     }
 }
